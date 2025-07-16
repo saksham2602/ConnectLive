@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:5000");
+const socket = io("https://webrtc-backend-yom8.onrender.com");
 
 export default function VideoRoom({ roomID, username }) {
   const localVideoRef = useRef(null);
@@ -26,6 +26,22 @@ export default function VideoRoom({ roomID, username }) {
       setStream(mediaStream);
 
       socket.emit("join-room", roomID);
+
+socket.on("user-joined", () => {
+  console.log("Another user joined, sending ready signal");
+  socket.emit("ready", roomID);
+});
+
+socket.on("ready", async () => {
+  console.log("Received ready signal, creating offer");
+  const offer = await peerConnection.current.createOffer();
+  await peerConnection.current.setLocalDescription(offer);
+  socket.emit("signal", {
+    roomID,
+    data: { type: "offer", sdp: offer },
+  });
+});
+
     };
 
     init();
