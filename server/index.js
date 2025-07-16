@@ -1,34 +1,26 @@
-const rooms = new Set();
+const express = require("express");
+const http = require("http");
+const cors = require("cors");
+const { Server } = require("socket.io");
+
+const app = express();
+app.use(cors());
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
   socket.on("join-room", (roomID) => {
-    const isFirst = !rooms.has(roomID);
     socket.join(roomID);
-
-    if (isFirst) {
-      rooms.add(roomID);
-    } else {
-      socket.to(roomID).emit("user-joined", socket.id);
-    }
-
-    socket.emit("room-status", { exists: true });
+    socket.to(roomID).emit("user-joined", socket.id);
     console.log(`User ${socket.id} joined room ${roomID}`);
-  });
-
-  socket.on("check-room", (roomID, callback) => {
-    callback(rooms.has(roomID));
-  });
-
-  socket.on("disconnecting", () => {
-    const socketRooms = Array.from(socket.rooms).filter((r) => r !== socket.id);
-    socketRooms.forEach((roomID) => {
-      const room = io.sockets.adapter.rooms.get(roomID);
-      if (!room || room.size === 1) {
-        rooms.delete(roomID);
-      }
-    });
   });
 
   socket.on("signal", ({ roomID, data }) => {
@@ -41,6 +33,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
+    socket.broadcast.emit("user-left", socket.id);
   });
 });
 
