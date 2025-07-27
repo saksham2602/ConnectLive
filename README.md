@@ -1,5 +1,5 @@
 
-# WebRTC Video Calling App
+# ConnectLive
 
 A real-time, peer-to-peer video calling application built with **WebRTC**, **React**, and **Socket.IO**. Users can create or join rooms using a unique room ID to share **video, audio, screen, and text chat** in real-time.
 
